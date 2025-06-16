@@ -1,5 +1,30 @@
 
 let results;
+let currentSortCriterion = 'most-relevant'; // Default sort criterion
+
+// Function to update URL parameters using Navigation API
+function updateURLParams(searchTerm, sortCriterion) {
+  const url = new URL(window.location);
+
+  if (searchTerm !== undefined) {
+    if (searchTerm) {
+      url.searchParams.set('q', searchTerm);
+    } else {
+      url.searchParams.delete('q');
+    }
+  }
+
+  if (sortCriterion !== undefined) {
+    if (sortCriterion) {
+      url.searchParams.set('sort', sortCriterion);
+    } else {
+      url.searchParams.delete('sort');
+    }
+  }
+
+  // Use Navigation API to update URL without reloading the page
+  window.history.pushState({}, '', url);
+}
 
 var index = new FlexSearch.Document({
 	encode: function(str){
@@ -37,6 +62,12 @@ let browseDocuments = searchDocuments.sort(function(a,b){
 });
 
 function sortResults(criterion) {
+  // Update current sort criterion
+  currentSortCriterion = criterion;
+
+  // Update URL with sort criterion
+  updateURLParams(undefined, criterion);
+
   if (criterion === 'newest-first') {
     results = results.sort(function(a,b){
       return new Date(b.created_at) - new Date(a.created_at);
@@ -90,13 +121,18 @@ function renderResults() {
 }
 
 function onSearchChange(e) {
-  results = index.search(e.target.value, { enrich: true });
+  const searchTerm = e.target.value;
+  results = index.search(searchTerm, { enrich: true });
   if (results.length > 0) {
     // limit search results to the top 100 by relevance
     results = results.slice(0,100);
     // preserve original search result order in the 'index' variable since that is ordered by relevance
     results = results[0].result.map((item, index) => { let result = item.doc; result.index = index; return result;});
   }
+
+  // Update URL with search term
+  updateURLParams(searchTerm, undefined);
+
   renderResults();
 }
 searchInput.addEventListener('input', onSearchChange);
@@ -108,6 +144,12 @@ function searchTab() {
   otherTab.classList.remove('active');
   document.getElementById('browse').hidden = true;
   document.getElementById('search').hidden = false;
+
+  // If there's a search term, make sure it's in the URL
+  const searchTerm = searchInput.value;
+  if (searchTerm) {
+    updateURLParams(searchTerm, currentSortCriterion);
+  }
 }
 
 function browseTab() {
@@ -118,6 +160,9 @@ function browseTab() {
   const searchContent = document.getElementById('search');
   document.getElementById('search').hidden = true;
   document.getElementById('browse').hidden = false;
+
+  // When switching to browse tab, remove search term from URL but keep sort criterion
+  updateURLParams('', currentSortCriterion);
 }
 
 const pageSize = 50;
@@ -142,5 +187,36 @@ function renderBrowse() {
   document.getElementById('browse-output').innerHTML = output.join('');
   document.getElementById('browse-output').innerHTML += '<a href="#tabs">top &uarr;</a>';
 }
+
+// Initialize from URL parameters
+function initFromURLParams() {
+  const url = new URL(window.location);
+  const searchTerm = url.searchParams.get('q');
+  const sortCriterion = url.searchParams.get('sort');
+
+  // Set search input value if 'q' parameter exists
+  if (searchTerm) {
+    searchInput.value = searchTerm;
+    // Trigger search
+    onSearchChange({ target: { value: searchTerm } });
+    // Ensure search tab is active
+    searchTab();
+  } else if (sortCriterion) {
+    // If no search term but sort criterion exists, determine which tab should be active
+    if (sortCriterion.includes('browse')) {
+      browseTab();
+    } else {
+      searchTab();
+    }
+  }
+
+  // Apply sort criterion if 'sort' parameter exists
+  if (sortCriterion) {
+    sortResults(sortCriterion);
+  }
+}
+
+// Call initialization function
+initFromURLParams();
 
 renderBrowse();
