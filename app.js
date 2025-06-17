@@ -1,179 +1,187 @@
-
 let results;
 let currentSortCriterion = 'most-relevant'; // Default sort criterion
 
 // Function to update URL parameters using Navigation API
 function updateURLParams(searchTerm, sortCriterion) {
-  const url = new URL(window.location);
+    const url = new URL(window.location);
 
-  if (searchTerm !== undefined) {
-    if (searchTerm) {
-      url.searchParams.set('q', searchTerm);
-    } else {
-      url.searchParams.delete('q');
+    if (searchTerm !== undefined) {
+        if (searchTerm) {
+            url.searchParams.set('q', searchTerm);
+        } else {
+            url.searchParams.delete('q');
+        }
     }
-  }
 
-  if (sortCriterion !== undefined) {
-    if (sortCriterion) {
-      url.searchParams.set('sort', sortCriterion);
-    } else {
-      url.searchParams.delete('sort');
+    if (sortCriterion !== undefined) {
+        if (sortCriterion) {
+            url.searchParams.set('sort', sortCriterion);
+        } else {
+            url.searchParams.delete('sort');
+        }
     }
-  }
 
-  // Use Navigation API to update URL without reloading the page
-  window.history.pushState({}, '', url);
+    // Use Navigation API to update URL without reloading the page
+    window.history.pushState({}, '', url);
 }
 
 var index = new FlexSearch.Document({
-	encode: function(str){
-		const cjkItems = str.replace(/[\x00-\x7F]/g, "").split("");
-		const asciiItems = str.toLowerCase().split(/\W+/);
-		return cjkItems.concat(asciiItems);
-  },
-  document: {
-    id: "id_str",
-    index: ["full_text"],
-    store: true
-  }
+    encode: function (str) {
+        const cjkItems = str.replace(/[\x00-\x7F]/g, "").split("");
+        const asciiItems = str.toLowerCase().split(/\W+/);
+        return cjkItems.concat(asciiItems);
+    },
+    document: {
+        id: "id_str",
+        index: ["full_text"],
+        store: true
+    }
 });
 
 
 const searchInput = document.getElementById('search-input');
 
 function processData(data) {
-  for (doc of data) {
-    index.add({
-        id_str: doc.id_str,
-        created_at: doc.created_at,
-        full_text: doc.full_text,
-        favorite_count: doc.favorite_count,
-        retweet_count: doc.retweet_count
-    })
-  };
-  document.getElementById('loading').hidden = true;
-  document.getElementById('search').hidden = false;
+    for (doc of data) {
+        index.add({
+            id_str: doc.id_str,
+            created_at: doc.created_at,
+            full_text: doc.full_text,
+            favorite_count: doc.favorite_count,
+            retweet_count: doc.retweet_count
+        })
+    }
+    document.getElementById('loading').hidden = true;
+    document.getElementById('search').hidden = false;
 }
 
 processData(searchDocuments);
-let browseDocuments = searchDocuments.sort(function(a,b){
-  return new Date(b.created_at) - new Date(a.created_at);
+let browseDocuments = searchDocuments.sort(function (a, b) {
+    return new Date(b.created_at) - new Date(a.created_at);
 });
 
 function sortResults(criterion) {
-  // Update current sort criterion
-  currentSortCriterion = criterion;
+    // Update current sort criterion
+    currentSortCriterion = criterion;
 
-  // Update URL with sort criterion
-  updateURLParams(undefined, criterion);
+    // Update URL with sort criterion
+    updateURLParams(undefined, criterion);
 
-  if (criterion === 'newest-first') {
-    results = results.sort(function(a,b){
-      return new Date(b.created_at) - new Date(a.created_at);
-    });
-    renderResults();
-  }
-  if (criterion === 'oldest-first') {
-    results = results.sort(function(a,b){
-      return new Date(a.created_at) - new Date(b.created_at);
-    });
-    renderResults();
-  }
-  if (criterion === 'most-relevant') {
-    results = results.sort(function(a,b){
-      return a.index - b.index;
-    });
-    renderResults();
-  }
-  if (criterion === 'most-popular') {
-    results = results.sort(function(a,b){
-      return (+b.favorite_count + +b.retweet_count) - (+a.favorite_count + +a.retweet_count);
-    });
-    renderResults();
-  }
-  if (criterion === 'newest-first-browse') {
-    browseDocuments = browseDocuments.sort(function(a,b){
-      return new Date(b.created_at) - new Date(a.created_at);
-    });
-    renderBrowse();
-  }
-  if (criterion === 'oldest-first-browse') {
-    browseDocuments = browseDocuments.sort(function(a,b){
-      return new Date(a.created_at) - new Date(b.created_at);
-    });
-    renderBrowse();
-  }
-  if (criterion === 'most-popular-browse') {
-    browseDocuments = browseDocuments.sort(function(a,b){
-      return (+b.favorite_count + +b.retweet_count) - (+a.favorite_count + +a.retweet_count);
-    });
-    renderBrowse();
-  }
+    if (criterion === 'newest-first') {
+        results = results.sort(function (a, b) {
+            return new Date(b.created_at) - new Date(a.created_at);
+        });
+        renderResults();
+    }
+    if (criterion === 'oldest-first') {
+        results = results.sort(function (a, b) {
+            return new Date(a.created_at) - new Date(b.created_at);
+        });
+        renderResults();
+    }
+    if (criterion === 'most-relevant') {
+        results = results.sort(function (a, b) {
+            return a.index - b.index;
+        });
+        renderResults();
+    }
+    if (criterion === 'most-popular') {
+        results = results.sort(function (a, b) {
+            return (+b.favorite_count + +b.retweet_count) - (+a.favorite_count + +a.retweet_count);
+        });
+        renderResults();
+    }
+    if (criterion === 'newest-first-browse') {
+        browseDocuments = browseDocuments.sort(function (a, b) {
+            return new Date(b.created_at) - new Date(a.created_at);
+        });
+        renderBrowse();
+    }
+    if (criterion === 'oldest-first-browse') {
+        browseDocuments = browseDocuments.sort(function (a, b) {
+            return new Date(a.created_at) - new Date(b.created_at);
+        });
+        renderBrowse();
+    }
+    if (criterion === 'most-popular-browse') {
+        browseDocuments = browseDocuments.sort(function (a, b) {
+            return (+b.favorite_count + +b.retweet_count) - (+a.favorite_count + +a.retweet_count);
+        });
+        renderBrowse();
+    }
 }
 
 function renderResults() {
-  const output = results.map(item => `<p class="search_item"><div class="search_link"><a href="incorn_it/status/${item.id_str}">link</a></div> <div class="search_text">${item.full_text}</div><div class="search_time">${new Date(item.created_at).toLocaleString()}</div><hr class="search_divider" /></p>`.replace(/\.\.\/\.\.\/tweets_media\//g,'incorn_it/tweets_media/'));
-  document.getElementById('output').innerHTML = output.join('');
-  if (results.length > 0) {
-    document.getElementById('output').innerHTML += '<a href="#tabs">top &uarr;</a>';
-  }
+    const output = results.map(item => `<p class="search_item"><div class="search_link"><a href="incorn_it/status/${item.id_str}">link</a></div> <div class="search_text">${item.full_text}</div><div class="search_time">${new Date(item.created_at).toLocaleString()}</div><hr class="search_divider" /></p>`.replace(/\.\.\/\.\.\/tweets_media\//g, 'incorn_it/tweets_media/'));
+    document.getElementById('output').innerHTML = output.join('');
+    if (results.length > 0) {
+        document.getElementById('output').innerHTML += '<a href="#tabs">top &uarr;</a>';
+    }
 }
 
 function onSearchChange(e) {
-  const searchTerm = e.target.value;
-  results = index.search(searchTerm, { enrich: true });
-  if (results.length > 0) {
+    const searchTerm = e.target.value;
+    results = index.search(searchTerm, {enrich: true});
+    if (results.length > 0) {
     // limit search results to the top 100 by relevance
     results = results.slice(0,100);
-    // preserve original search result order in the 'index' variable since that is ordered by relevance
-    results = results[0].result.map((item, index) => { let result = item.doc; result.index = index; return result;});
-  }
+        // preserve original search result order in the 'index' variable since that is ordered by relevance
+        results = results[0].result.map((item, index) => ({...item.doc, index}));
+    }
 
-  // Update URL with search term
-  updateURLParams(searchTerm, undefined);
+    const quotes = [...searchTerm.matchAll(/"([^"]*)"/g).map(([, v]) => v)];
+    if (quotes.length > 0) {
+        const filtered = results.filter((item) => quotes.every(q => item.full_text.toLowerCase().includes(q.toLowerCase())));
+        if (filtered.length > 0) {
+            results = filtered;
+        }
+    }
 
-  renderResults();
+    // Update URL with search term
+    updateURLParams(searchTerm, undefined);
+
+    renderResults();
 }
+
 searchInput.addEventListener('input', onSearchChange);
 
 function searchTab() {
-  const clickedTab = document.getElementById('search-tab');
-  clickedTab.classList.add('active');
-  const otherTab = document.getElementById('browse-tab');
-  otherTab.classList.remove('active');
-  document.getElementById('browse').hidden = true;
-  document.getElementById('search').hidden = false;
+    const clickedTab = document.getElementById('search-tab');
+    clickedTab.classList.add('active');
+    const otherTab = document.getElementById('browse-tab');
+    otherTab.classList.remove('active');
+    document.getElementById('browse').hidden = true;
+    document.getElementById('search').hidden = false;
 
-  // If there's a search term, make sure it's in the URL
-  const searchTerm = searchInput.value;
-  if (searchTerm) {
-    updateURLParams(searchTerm, currentSortCriterion);
-  }
+    // If there's a search term, make sure it's in the URL
+    const searchTerm = searchInput.value;
+    if (searchTerm) {
+        updateURLParams(searchTerm, currentSortCriterion);
+    }
 }
 
 function browseTab() {
-  const clickedTab = document.getElementById('browse-tab');
-  clickedTab.classList.add('active');
-  const otherTab = document.getElementById('search-tab');
-  otherTab.classList.remove('active');
-  const searchContent = document.getElementById('search');
-  document.getElementById('search').hidden = true;
-  document.getElementById('browse').hidden = false;
+    const clickedTab = document.getElementById('browse-tab');
+    clickedTab.classList.add('active');
+    const otherTab = document.getElementById('search-tab');
+    otherTab.classList.remove('active');
+    const searchContent = document.getElementById('search');
+    document.getElementById('search').hidden = true;
+    document.getElementById('browse').hidden = false;
 
-  // When switching to browse tab, remove search term from URL but keep sort criterion
-  updateURLParams('', currentSortCriterion);
+    // When switching to browse tab, remove search term from URL but keep sort criterion
+    updateURLParams('', currentSortCriterion);
 }
 
 const pageSize = 50;
-const pageMax = Math.floor(browseDocuments.length/pageSize) + 1;
+const pageMax = Math.floor(browseDocuments.length / pageSize) + 1;
 let page = 1;
 let browseIndex = (page - 1) * pageSize;
 
 function onPageNumChange(e) {
-  page = e.target.value;
-  browseIndex = (page - 1) * pageSize;
-  renderBrowse();
+    page = e.target.value;
+    browseIndex = (page - 1) * pageSize;
+    renderBrowse();
 }
 
 document.getElementById('page-total').innerText = pageMax;
@@ -183,37 +191,37 @@ document.getElementById('page-num').max = pageMax;
 document.getElementById('page-num').min = 1;
 
 function renderBrowse() {
-  const output = browseDocuments.slice(browseIndex, browseIndex + pageSize).map(item => `<p class="search_item"><div class="search_link"><a href="incorn_it/status/${item.id_str}">link</a></div> <div class="search_text">${item.full_text}</div><div class="search_time">${new Date(item.created_at).toLocaleString()}</div><hr class="search_divider" /></p>`.replace(/\.\.\/\.\.\/tweets_media\//g,'incorn_it/tweets_media/'));
-  document.getElementById('browse-output').innerHTML = output.join('');
-  document.getElementById('browse-output').innerHTML += '<a href="#tabs">top &uarr;</a>';
+    const output = browseDocuments.slice(browseIndex, browseIndex + pageSize).map(item => `<p class="search_item"><div class="search_link"><a href="incorn_it/status/${item.id_str}">link</a></div> <div class="search_text">${item.full_text}</div><div class="search_time">${new Date(item.created_at).toLocaleString()}</div><hr class="search_divider" /></p>`.replace(/\.\.\/\.\.\/tweets_media\//g, 'incorn_it/tweets_media/'));
+    document.getElementById('browse-output').innerHTML = output.join('');
+    document.getElementById('browse-output').innerHTML += '<a href="#tabs">top &uarr;</a>';
 }
 
 // Initialize from URL parameters
 function initFromURLParams() {
-  const url = new URL(window.location);
-  const searchTerm = url.searchParams.get('q');
-  const sortCriterion = url.searchParams.get('sort');
+    const url = new URL(window.location);
+    const searchTerm = url.searchParams.get('q');
+    const sortCriterion = url.searchParams.get('sort');
 
-  // Set search input value if 'q' parameter exists
-  if (searchTerm) {
-    searchInput.value = searchTerm;
-    // Trigger search
-    onSearchChange({ target: { value: searchTerm } });
-    // Ensure search tab is active
-    searchTab();
-  } else if (sortCriterion) {
-    // If no search term but sort criterion exists, determine which tab should be active
-    if (sortCriterion.includes('browse')) {
-      browseTab();
-    } else {
-      searchTab();
+    // Set search input value if 'q' parameter exists
+    if (searchTerm) {
+        searchInput.value = searchTerm;
+        // Trigger search
+        onSearchChange({target: {value: searchTerm}});
+        // Ensure search tab is active
+        searchTab();
+    } else if (sortCriterion) {
+        // If no search term but sort criterion exists, determine which tab should be active
+        if (sortCriterion.includes('browse')) {
+            browseTab();
+        } else {
+            searchTab();
+        }
     }
-  }
 
-  // Apply sort criterion if 'sort' parameter exists
-  if (sortCriterion) {
-    sortResults(sortCriterion);
-  }
+    // Apply sort criterion if 'sort' parameter exists
+    if (sortCriterion) {
+        sortResults(sortCriterion);
+    }
 }
 
 // Call initialization function
